@@ -10,6 +10,20 @@
 - Tüm notlar bir .txt dosyasına kaydedilsin.
 - Menü tabanlı bir sistem ile etkileşimli olsun.
 
+**Hedef Dosya Yapısı**:
+- notepad-project/
+|--- main.c
+|--- notepad.c
+|--- notepad.h
+|--- password.c
+|--- password.h
+|--- notes.txt
+|--- password.txt
+|--- Makefile
+
+**Derleme Komutu**:
+- gcc main.c notepad.c password.c -o notepad.exe
+
 **Özellikler**:
 - Yeni not ekleme --> +
 - Tüm notları görüntüle --> +
@@ -19,14 +33,10 @@
 - Belirli Notu Silme Özelliği --> +
 - Sifreli giriş --> +
 - Sifre Değiştirme --> +
+- Kategori / Etiket Sistemi --> +
 
 
 **Eklenecek Özellikler**:
-- Kategori / Etiket Sistemi:
-    - Kullanıcı not eklerken bir kategori girer (örneğin: iş, okul, alışveriş)
-    - Not, kategori ile birlikte dosyaya kaydedilir.
-    - Kullanıcı isterse sadece belirli kategoriye ait notları görüntüleyebilir veya arayabilir.
-    - [kisisel] [12-07-2025 20:10] Markete git.
-    - [okul] [12-07-2025 10.10] Derin Ogrenme Notlarını düzenledim.
+- Projeyi .h ve .c dosyalarına ayırma
 
 Notepad.c

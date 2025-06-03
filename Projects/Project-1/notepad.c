@@ -2,97 +2,9 @@
 #include <string.h>
 #include <stdlib.h>
 #include <time.h>
+#include "notepad.h"
 
-#define FILENAME            "notes.txt"
-#define MAX_NOTE_LENGTH     256
-#define EXIT_COMMAND        6
-#define PASSWORD_FILE       "password.txt"
-#define MAX_ATTEMPS         3
-
-/* ================ PASSWORD OPERATIONS ===============*/
-
-int checkPassword(void)
-{
-    FILE *fp = fopen(PASSWORD_FILE, "r");
-    if(fp == NULL)
-    {
-        printf("HATA: %s dosyasi bulunamadi!\n", PASSWORD_FILE);
-        return 0;
-    }
-
-    char realPassword[50];
-    fgets(realPassword, sizeof(realPassword), fp);
-    realPassword[strcspn(realPassword, "\n")] = '\0';
-    fclose(fp);
-
-    char input[50];
-    int attempts = 0;
-
-    while (attempts < MAX_ATTEMPS)
-    {
-        printf("Sifreyi girin (%d/%d): ", attempts + 1, MAX_ATTEMPS); // Sifreyi girin (1/3);
-        scanf("%s", input);
-
-        if(strcmp(input, realPassword) == 0)
-        {
-            printf("Giris basarili! Hos geldiniz!\n\n");
-            return 1;
-        } 
-        else 
-        {
-            printf("Hatali Sifre. %d hakkiniz kaldi.\n", MAX_ATTEMPS - attempts - 1);
-            attempts++;
-        }
-    }
-
-
-    printf("3 yanlis giris yapildi. Program sonlandiriliyor...\n");
-    return 0;    
-}
-
-void changePassword()
-{
-    FILE *fp = fopen(PASSWORD_FILE, "r");
-    if(fp == NULL)
-    {
-        printf("Sifre dosyasi acilamadi!\n");
-        return;
-    }
-
-    char currentPassword[50];
-    fgets(currentPassword, sizeof(currentPassword), fp);
-    currentPassword[strcspn(currentPassword, "\n")] = '\0'; // newline sil
-    fclose(fp);
-
-    char input[50];
-    printf("Mevcut sifreyi girin: ");
-    scanf("%s", input);
-
-    if(strcmp(input, currentPassword) != 0)
-    {
-        printf("Hatali sifre. Sifre degistirilemedi!\n");
-        return;
-    }
-
-    char newPassword[50];
-    printf("Yeni sifreyi girin: ");
-    scanf("%s", newPassword);
-
-    fp = fopen(PASSWORD_FILE, "w");
-    if(fp == NULL)
-    {
-        printf("Yeni sifre yazilamadi.\n");
-        return;
-    }
-
-    fprintf(fp, "%s\n", newPassword);
-    fclose(fp);
-
-    printf("Sifre basariyla degistirildi.\n");
-}
-
-
-/* ================ NOTE OPERATIONS ===============*/
+const char *categories[] = {"kisisel", "is", "okul"};
 
 void addNote(void)
 {
@@ -108,15 +20,36 @@ void addNote(void)
     time(&now);
     struct tm *t = localtime(&now);
 
-    char note[MAX_NOTE_LENGTH];
+    const char *category;
+    int selection;
+
+    printf("Kategori Secin:\n");
+    for(int i = 0; i < CATEGORY_COUNT; i++)
+    {
+        printf("%d. %s\n", i + 1, categories[i]);
+    }
+    printf("Seciminiz: ");
+    scanf("%d", &selection);
+
+    if(selection < 1 || selection > CATEGORY_COUNT)
+    {
+        printf("Gecersiz kategori secimi!\n\n");
+        fclose(fp);
+        return;
+    }
+
+    category = categories[selection - 1];
+
+    char note[MAX_NOTE_LENGTH];    
+    getchar();
     printf("Yeni notunuzu girin: ");
-    getchar(); // önceki girilen newline'ı temizliyoruz.
     fgets(note, MAX_NOTE_LENGTH, stdin);
+    note[strcspn(note, "\n")] = '\0';
 
 
-    fprintf(fp, "[%02d-%02d-%d %02d:%02d] %s", t->tm_mday, t->tm_mon + 1, t->tm_year + 1900, t->tm_hour, t->tm_min, note);
+    fprintf(fp, "[%s] [%02d-%02d-%d %02d:%02d] %s\n", category, t->tm_mday, t->tm_mon + 1, t->tm_year + 1900, t->tm_hour, t->tm_min, note);
     fclose(fp);
-    printf("Not zaman damgasi ile kaydedildi!\n\n");
+    printf("Not zaman damgasi ve kategori ile kaydedildi!\n\n");
 }   
 
 void viewNotes(void)
@@ -239,58 +172,52 @@ void deleteNote()
     printf("Not silindi.\n\n");
 }
 
-int main()
-{   
-    if(!checkPassword())
-    {
-        return 1; // Sifre yanlis oldugundan programdan cikiliyor.
-    }    
-    
-    int choice;
+void viewNotesByCategory(void)
+{
+    int selection;
+    char line[MAX_NOTE_LENGTH];
+    int found = 0;
 
-    do
+    FILE *fp = fopen(FILENAME, "r");
+    if(fp == NULL)
     {
-        printf("=== Kisisel Not Defteri ===\n");
-        printf("1. Not Ekle\n");
-        printf("2. Notlari Goruntule\n");
-        printf("3. Not Ara\n");
-        printf("4. Not Sil\n");
-        printf("5. Sifre Degistir\n");
-        printf("%d. Cikis\n", EXIT_COMMAND);
-        printf("Seciminiz: ");
-        scanf("%d", &choice);
+        printf("Not dosyasi bulunamadi!\n");
+        return;
+    }
 
-        switch (choice)
+    printf("Kategori Secin:\n");
+    for(int i = 0; i < CATEGORY_COUNT; i++)
+    {
+        printf("%d. %s\n", i + 1, categories[i]);
+    }
+    printf("Seciminiz: ");
+    scanf("%d", &selection);
+
+    if(selection < 1 || selection > CATEGORY_COUNT)
+    {
+        printf("Gecersiz kategori secimi!\n\n");
+        fclose(fp);
+        return;
+    }
+
+    const char *category = categories[selection - 1];
+
+    printf("\n-- [%s] Kategorisindeki Notlar --\n", category);
+
+    while(fgets(line, sizeof(line), fp))
+    {
+        if(strstr(line, category) == line + 1)
         {
-            case 1:
-                addNote();
-                break;
-            
-            case 2:
-                viewNotes();
-                break;
-            
-            case 3:
-                searchNotes();
-                break;
-
-            case 4:
-                deleteNote();
-                break;
-            
-            case 5:
-                changePassword();
-                break;
-            
-            case EXIT_COMMAND:
-                printf("Programdan cikiliyor...\n");
-                break;
-            
-            default:
-                printf("Gecersiz Secim!\n");
+            printf("- %s", line);
+            found = 1;
         }
-    } while (choice != EXIT_COMMAND);
-    
+    }
 
-    return 0;
+    if(!found)
+    {
+        printf("Bu kategoriye ait not bulunamadi.\n");
+    }
+
+    printf("\n------------------------------------------\n\n");
+    fclose(fp);
 }
